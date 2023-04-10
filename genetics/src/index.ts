@@ -1,3 +1,6 @@
+export * from './utils/array.utils';
+export * from './utils/object.utils';
+
 export * from './interfaces/candidate.interface';
 export * from './interfaces/population.interface';
 export * from './interfaces/population-iteration.interface';

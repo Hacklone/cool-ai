@@ -5,12 +5,7 @@ export interface ICandidateTest {
 }
 
 export interface ICandidateTestResult {
-  history: ICandidateTestHistoryEntry[];
   candidateRanks: { score: number; candidateId: CandidateId; }[];
-}
-
-export interface ICandidateTestHistoryEntry {
-
 }
 
 export interface ICandidateTestFactory {

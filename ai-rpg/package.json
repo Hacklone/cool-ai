@@ -1,0 +1,19 @@
+{
+  "name": "@cool/ai-rpg",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc && cp package.json ./dist/package.json",
+    "watch": "tsc -w"
+  },
+  "dependencies": {
+    "@cool/genetics": "file:../genetics/dist",
+    "@tensorflow/tfjs": "^4.4.0",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.192",
+    "@types/uuid": "^9.0.1",
+    "typescript": "^5.0.3"
+  }
+}
