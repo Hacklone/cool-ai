@@ -1,11 +1,11 @@
-import { createArrayWithLength, ICandidateFactory, ISerializedCandidate } from '@cool/genetics';
+import { CandidateSource, createArrayWithLength, ICandidateFactory, ISerializedCandidate } from '@cool/genetics';
 import * as tf from '@tensorflow/tfjs';
 import { ModelUtils, SerializedModel } from '../utils/model.utils';
 import { GameConfig } from '../interfaces/game.interface';
 import { Player } from './player';
 
 const MUTATION_RATE = 0.4;
-const MAX_MUTATION_POWER = 0.4;
+const MAX_MUTATION_POWER = 0.1;
 const NUMBER_OF_HIDDEN_LAYERS = 3;
 const PLAYER_MODEL_OUTPUT_NODES = 3;
 
@@ -42,6 +42,8 @@ export class PlayerFactory implements ICandidateFactory {
 
     return new Player(
       model,
+      [],
+      CandidateSource.Random,
       this._gameConfig,
     );
   }
@@ -67,6 +69,8 @@ export class PlayerFactory implements ICandidateFactory {
 
     return new Player(
       newModel,
+      [player1.id, player2.id],
+      CandidateSource.CrossOver,
       this._gameConfig,
     );
   }
@@ -74,6 +78,8 @@ export class PlayerFactory implements ICandidateFactory {
   public async createCloneCandidateAsync(originalPlayer: Player): Promise<Player> {
     return new Player(
       await ModelUtils.cloneModelAsync(originalPlayer.model),
+      [originalPlayer.id],
+      CandidateSource.Clone,
       this._gameConfig,
     );
   }
@@ -81,12 +87,17 @@ export class PlayerFactory implements ICandidateFactory {
   public async createMutatedCandidateAsync(originalPlayer: Player): Promise<Player> {
     return new Player(
       await ModelUtils.mutateModelAsync(originalPlayer.model, MUTATION_RATE, MAX_MUTATION_POWER),
+      [originalPlayer.id],
+      CandidateSource.Mutation,
       this._gameConfig,
     );
   }
 
   public async serializeCandidateAsync(candidate: Player): Promise<SerializedPlayer> {
     return {
+      id: candidate.id,
+      parentIds: candidate.parentIds,
+      source: candidate.source,
       model: await ModelUtils.serializeModelAsync(candidate.model),
     };
   }
@@ -94,6 +105,8 @@ export class PlayerFactory implements ICandidateFactory {
   public async deserializeAsync(serializedData: SerializedPlayer): Promise<Player> {
     return new Player(
       await ModelUtils.deserializeModelAsync(serializedData.model),
+      serializedData.parentIds,
+      serializedData.source,
       this._gameConfig,
     );
   }

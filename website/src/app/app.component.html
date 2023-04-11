@@ -20,6 +20,7 @@
       <tr>
         <th>Id</th>
         <th>Fitness</th>
+        <th>Source</th>
         <th>Actions</th>
       </tr>
       </thead>
@@ -27,6 +28,7 @@
       <tr *ngFor="let candidate of currentPopulation.population.candidates">
         <td>{{ candidate.id }}</td>
         <td>{{ getFitnessOfCandidate(candidate.id) }}</td>
+        <td>{{ candidate.source }}</td>
         <td>
           <button mat-raised-button color="primary" (click)="playCandidateTestAsync(candidate.id)">
             &#9658;&nbsp;Play

@@ -71,7 +71,7 @@ export class GameResultPlayerComponent implements OnInit, OnChanges {
 
     setTimeout(() => {
       this._keepPlayingStates();
-    }, 500);
+    }, 350);
   }
 
   public stopPlayingStates() {

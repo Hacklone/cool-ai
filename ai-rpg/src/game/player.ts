@@ -1,4 +1,4 @@
-import { CandidateId, ICandidate } from '@cool/genetics';
+import { CandidateId, CandidateSource, ICandidate } from '@cool/genetics';
 import { v4 as uuid } from 'uuid';
 import {
   directionToNumber,
@@ -15,6 +15,8 @@ import * as tf from '@tensorflow/tfjs';
 export class Player implements ICandidate {
   constructor(
     public model: tf.LayersModel,
+    public parentIds: CandidateId[],
+    public source: CandidateSource | undefined,
     private _gameConfig: GameConfig,
   ) {
   }
