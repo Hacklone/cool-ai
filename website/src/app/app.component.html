@@ -1,6 +1,42 @@
-<h1>GENETICS AI RPG</h1>
+<div class="text-center p-4">
+  <h1>GENETICS AI RPG</h1>
 
-<div class="mt-3">
+  <div *ngIf="currentlyPlayingGameResult" class="mt-3">
+    <app-game-result-player [gameResult]="currentlyPlayingGameResult"></app-game-result-player>
+  </div>
 
+  <div class="mt-3 content-center">
+    <button mat-raised-button color="primary" (click)="runNextPopulationAsync()">Next population</button>
+    <button *ngIf="runningStopped" class="ms-2" mat-raised-button color="warn" (click)="runContinuouslyAsync()">RUN</button>
+    <button *ngIf="!runningStopped" class="ms-2" mat-raised-button color="warn" (click)="stopRunningAsync()">STOP</button>
+    <button mat-raised-button class="ms-2" (click)="savePopulationAsync()">Save</button>
+    <button mat-raised-button class="ms-2" (click)="restorePopulationAsync()">Load</button>
+  </div>
+
+  <div *ngIf="currentPopulation" class="mt-3 d-inline-block">
+    <h2>Population: {{ currentPopulation.population.index }}.</h2>
+    <table class="table table-striped mt-2">
+      <thead>
+      <tr>
+        <th>Id</th>
+        <th>Fitness</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let candidate of currentPopulation.population.candidates">
+        <td>{{ candidate.id }}</td>
+        <td>{{ getFitnessOfCandidate(candidate.id) }}</td>
+        <td>
+          <button mat-raised-button color="primary" (click)="playCandidateTestAsync(candidate.id)">
+            &#9658;&nbsp;Play
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
+
+
 

@@ -2,15 +2,21 @@ import { IPopulation, IPopulationFactory } from '../interfaces/population.interf
 import { IPopulationIterationFactory } from '../interfaces/population-iteration.interface';
 import { IGeneticsHistoryEntry } from '../interfaces/genetics.interface';
 
-export abstract class GeneticsRunner {
+export class GeneticsRunner {
+  private _initialPopulation?: IPopulation;
   private _history: IGeneticsHistoryEntry[] = [];
 
-  protected constructor(
+  constructor(
     private _populationFactory: IPopulationFactory,
     private _populationIterationFactory: IPopulationIterationFactory,
   ) {
   }
 
+  public setInitialPopulationAsync(population: IPopulation) {
+    this._history = [];
+
+    this._initialPopulation = population;
+  }
 
   public async runNextPopulationAsync(): Promise<IGeneticsHistoryEntry> {
     const lastHistoryEntry = this._history.at(-1);
@@ -18,7 +24,7 @@ export abstract class GeneticsRunner {
     let population: IPopulation;
 
     if (!lastHistoryEntry) {
-      population = await this._populationFactory.createInitialPopulationAsync();
+      population = this._initialPopulation ?? await this._populationFactory.createInitialPopulationAsync();
     } else {
       population = await this._populationFactory.createNextPopulationAsync(lastHistoryEntry.population, lastHistoryEntry.populationIterationResult);
     }

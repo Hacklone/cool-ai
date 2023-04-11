@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { GameState } from '@cool/ai-rpg';
+import { GameFieldDirection, GameObjectType, GameState } from '@cool/ai-rpg';
 
 @Component({
   selector: 'app-game-state-display',
@@ -7,10 +7,13 @@ import { GameState } from '@cool/ai-rpg';
   styleUrls: ['./game-state-display.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GameStateDisplayComponent implements OnChanges {
+export class GameStateDisplayComponent {
   @Input()
   public gameState!: GameState;
 
-  public ngOnChanges(changes: SimpleChanges): void {
-  }
+  protected readonly GameObjectType = GameObjectType;
+
+  protected readonly GameFieldDirection = GameFieldDirection;
+
+  protected FIELD_SIZE_PX = 16;
 }

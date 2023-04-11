@@ -1,0 +1,19 @@
+.field {
+  z-index: 1;
+
+  position: absolute;
+  display: inline-block;
+
+  border: 1px solid gray;
+}
+
+.game-object {
+  z-index: 2;
+
+  position: absolute;
+  display: inline-flex;
+  flex-direction: row;
+
+  align-items: center;
+  justify-content: center;
+}

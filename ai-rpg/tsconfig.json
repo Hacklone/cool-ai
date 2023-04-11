@@ -8,6 +8,10 @@
       "es2022",
       "dom"
     ],
+    "types": [
+      "long",
+      "node"
+    ],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "module": "commonjs",

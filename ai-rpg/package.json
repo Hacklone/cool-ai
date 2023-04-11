@@ -7,12 +7,15 @@
   },
   "dependencies": {
     "@cool/genetics": "file:../genetics/dist",
-    "@tensorflow/tfjs": "^4.4.0",
+    "@tensorflow/tfjs-node": "^4.4.0",
+    "buffer": "^6.0.3",
     "lodash": "^4.17.21",
+    "long": "^4.0.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.192",
+    "@types/long": "^4.0.2",
     "@types/uuid": "^9.0.1",
     "typescript": "^5.0.3"
   }

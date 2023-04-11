@@ -1,1 +1,41 @@
-<p>game-state-display works!</p>
+<ng-container *ngIf="gameState">
+  <div class="position-relative overflow-hidden d-inline-block"
+       [style.height]="(FIELD_SIZE_PX * gameState.config.rowCount) + 'px'"
+       [style.width]="(FIELD_SIZE_PX * gameState.config.columnCount) + 'px'"
+  >
+    <ng-container *ngFor="let row of gameState.fields; let rowIndex = index">
+      <ng-container *ngFor="let column of row; let columnIndex = index">
+        <div class="field"
+             [style.top]="(FIELD_SIZE_PX * rowIndex) + 'px'"
+             [style.left]="(FIELD_SIZE_PX * columnIndex) + 'px'"
+             [style.width]="FIELD_SIZE_PX + 'px'"
+             [style.height]="FIELD_SIZE_PX + 'px'"
+        >
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <ng-container *ngFor="let gameObject of gameState.gameObjects">
+      <div
+        class="game-object"
+        [style.top]="(FIELD_SIZE_PX * gameObject.position.row) + 'px'"
+        [style.left]="(FIELD_SIZE_PX * gameObject.position.column) + 'px'"
+        [style.width]="FIELD_SIZE_PX + 'px'"
+        [style.height]="FIELD_SIZE_PX + 'px'"
+      >
+        <ng-container [ngSwitch]="gameObject.type">
+          <ng-container *ngSwitchCase="GameObjectType.Wall">W</ng-container>
+          <ng-container *ngSwitchCase="GameObjectType.Food">F</ng-container>
+          <ng-container *ngSwitchCase="GameObjectType.Player">
+            <ng-container [ngSwitch]="gameObject.direction">
+              <ng-container *ngSwitchCase="GameFieldDirection.Up">&uarr;</ng-container>
+              <ng-container *ngSwitchCase="GameFieldDirection.Right">&rarr;</ng-container>
+              <ng-container *ngSwitchCase="GameFieldDirection.Down">&darr;</ng-container>
+              <ng-container *ngSwitchCase="GameFieldDirection.Left">&larr;</ng-container>
+            </ng-container>
+          </ng-container>
+        </ng-container>
+      </div>
+    </ng-container>
+  </div>
+</ng-container>

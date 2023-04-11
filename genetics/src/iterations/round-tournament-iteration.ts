@@ -1,4 +1,8 @@
-import { IPopulationIteration, IPopulationIterationResult } from '../interfaces/population-iteration.interface';
+import {
+  IPopulationIteration,
+  IPopulationIterationFactory,
+  IPopulationIterationResult,
+} from '../interfaces/population-iteration.interface';
 import { IPopulation } from '../interfaces/population.interface';
 import { CandidateId, ICandidate } from '../interfaces/candidate.interface';
 import { ICandidateTestFactory, ICandidateTestResult } from '../interfaces/candidate-test.interface';
@@ -39,13 +43,9 @@ export class RoundTournamentIteration implements IPopulationIteration {
     }]));
 
     for (const result of testResults) {
-      result!.candidateRanks.sort((a, b) => b.score - a.score);
-
-      const winningCandidateId = result!.candidateRanks.at(0)?.candidateId;
-
-      if (winningCandidateId) {
-        candidatePoints.get(winningCandidateId)!.fitness += 1;
-      }
+      result!.candidateRanks.forEach(_ => {
+        candidatePoints.get(_.candidateId)!.fitness += _.score;
+      });
     }
 
     const candidateRanks = Array.from(candidatePoints.values());
@@ -62,5 +62,16 @@ export class RoundTournamentIteration implements IPopulationIteration {
     const iteration = await this._candidateTestFactory.createCandidateTestAsync();
 
     return await iteration.runAsync(candidate1, candidate2);
+  }
+}
+
+export class RoundTournamentIterationFactory implements IPopulationIterationFactory {
+  constructor(
+    private _candidateTestFactory: ICandidateTestFactory,
+  ) {
+  }
+
+  public async createPopulationIterationAsync(): Promise<IPopulationIteration> {
+    return new RoundTournamentIteration(this._candidateTestFactory);
   }
 }

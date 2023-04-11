@@ -1,0 +1,28 @@
+<div class="text-center">
+  <div *ngIf="currentGameState">
+    <app-game-state-display [gameState]="currentGameState"></app-game-state-display>
+  </div>
+
+  <div class="mt-2">
+    <div *ngFor="let player of currentPlayers" class="content-center">
+      <div>{{ player.id }}</div>
+      <div class="ms-2">Energy: {{ player.energy }}</div>
+      <div class="ms-2">Move: {{ currentPlayerMove?.type || 'N/A' }}</div>
+    </div>
+  </div>
+
+  <div class="mt-2 content-center">
+    <button mat-raised-button (click)="previousState()" class="mx-2">
+      &#9664;&#124;
+    </button>
+    <button *ngIf="!isPlaying" mat-raised-button (click)="playStates()" class="mx-2">
+      Play
+    </button>
+    <button *ngIf="isPlaying" mat-raised-button (click)="stopPlayingStates()" class="mx-2">
+      Stop
+    </button>
+    <button mat-raised-button (click)="nextState()" class="mx-2">
+      &#124;&#9654;
+    </button>
+  </div>
+</div>

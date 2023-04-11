@@ -2,6 +2,7 @@ import { CandidateId, ICandidate } from '@cool/genetics';
 import { v4 as uuid } from 'uuid';
 import {
   directionToNumber,
+  GameConfig,
   GameFieldPosition,
   GameObjectType,
   PlayerMove,
@@ -10,31 +11,37 @@ import {
   positionEquals,
 } from '../interfaces/game.interface';
 import * as tf from '@tensorflow/tfjs';
-import { PLAYER_VISIBILITY_RADIUS } from './game-state';
-
-export const PLAYER_MODEL_INPUT_NODES = 4 + (PLAYER_VISIBILITY_RADIUS * PLAYER_VISIBILITY_RADIUS);
-export const PLAYER_MODEL_OUTPUT_NODES = 3;
 
 export class Player implements ICandidate {
   constructor(
     public model: tf.LayersModel,
+    private _gameConfig: GameConfig,
   ) {
   }
 
   public id = <CandidateId>uuid();
 
+  public dispose() {
+    this.model.dispose();
+  }
+
   public async getNextMoveAsync(playerVisible: PlayerVisible): Promise<PlayerMove> {
-    const inputTensor = tf.tensor([
+    const inputArray = [
       playerVisible.playerState.energy,
       playerVisible.playerState.position.row,
       playerVisible.playerState.position.column,
       directionToNumber(playerVisible.playerState.direction),
       ...this._generateVisibleFields(playerVisible),
-    ] satisfies number[]);
+    ];
+
+    const inputTensor = tf.tensor2d(inputArray, [1, inputArray.length]);
 
     const prediction = <tf.Tensor<any>>this.model.predict(inputTensor);
 
     const predictionData = Array.from(await prediction.data());
+
+    prediction.dispose();
+    inputTensor.dispose();
 
     const decision = predictionData.reduce((res, item, index) => {
       if (item > res.value) {
@@ -49,17 +56,20 @@ export class Player implements ICandidate {
 
     if (decision.index <= 0) {
       return {
+        candidateId: <CandidateId>this.id,
         type: PlayerMoveType.TurnLeft,
       };
     }
 
     if (decision.index === 1) {
       return {
+        candidateId: <CandidateId>this.id,
         type: PlayerMoveType.TurnRight,
       };
     }
 
     return {
+      candidateId: <CandidateId>this.id,
       type: PlayerMoveType.MoveForward,
     };
   }
@@ -67,8 +77,8 @@ export class Player implements ICandidate {
   private _generateVisibleFields(playerVisible: PlayerVisible): number[] {
     const result = [];
 
-    for (let row = -2; row < 3; row++) {
-      for (let column = -2; column < 3; column++) {
+    for (let row = (-1 * this._gameConfig.playerVisibilityRadius); row < (this._gameConfig.playerVisibilityRadius + 1); row++) {
+      for (let column = (-1 * this._gameConfig.playerVisibilityRadius); column < (this._gameConfig.playerVisibilityRadius + 1); column++) {
         const position: GameFieldPosition = {
           row: playerVisible.playerState.position.row + row,
           column: playerVisible.playerState.position.column + column,

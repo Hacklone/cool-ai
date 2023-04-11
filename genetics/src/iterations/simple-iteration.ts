@@ -1,4 +1,8 @@
-import { IPopulationIteration, IPopulationIterationResult } from '../interfaces/population-iteration.interface';
+import {
+  IPopulationIteration,
+  IPopulationIterationFactory,
+  IPopulationIterationResult,
+} from '../interfaces/population-iteration.interface';
 import { ICandidateTestFactory } from '../interfaces/candidate-test.interface';
 import { IPopulation } from '../interfaces/population.interface';
 
@@ -25,5 +29,15 @@ export class SimpleIteration implements IPopulationIteration {
       }),
     };
   }
+}
 
+export class SimpleIterationFactory implements IPopulationIterationFactory {
+  constructor(
+    private _candidateTestFactory: ICandidateTestFactory,
+  ) {
+  }
+
+  public async createPopulationIterationAsync(): Promise<IPopulationIteration> {
+    return new SimpleIteration(this._candidateTestFactory);
+  }
 }

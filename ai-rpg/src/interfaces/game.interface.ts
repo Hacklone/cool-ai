@@ -1,11 +1,23 @@
 import { ICandidateKnownCandidateTestState, ICandidateMove, ICandidateTestResult } from '@cool/genetics';
 
+export interface GameConfig {
+  columnCount: number;
+  rowCount: number;
+  initialFoodCount: number;
+  playerVisibilityRadius: number;
+}
+
 export interface GameState {
   fields: (GameObject | undefined)[][];
 
   gameObjects: GameObject[];
 
   playerScore: { id: string; score: number; }[];
+
+  config: {
+    rowCount: number;
+    columnCount: number;
+  };
 }
 
 export interface GameStateChange {

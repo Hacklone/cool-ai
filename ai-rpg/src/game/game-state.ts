@@ -1,5 +1,5 @@
 import {
-  FoodGameObject,
+  FoodGameObject, GameConfig,
   GameFieldDirection,
   GameFieldPosition,
   GameObject,
@@ -15,24 +15,73 @@ import { v4 as uuid } from 'uuid';
 import { random } from 'lodash';
 import { createArrayWithLength, deepClone } from '@cool/genetics';
 
-export const BOARD_WIDTH = 50;
-export const BOARD_HEIGHT = 50;
+const PLAYER_POSITIONS: GameFieldPosition[] = [
+  {
+    row: 8,
+    column: 8,
+  }
+];
 
-export const NUMBER_OF_FOODS = 3;
+const FOOD_POSITIONS: GameFieldPosition[] = [
+  {
+    row: 10,
+    column: 12,
+  },
+  {
+    row: 15,
+    column: 12,
+  },
+  {
+    row: 12,
+    column: 8,
+  },
+  {
+    row: 2,
+    column: 10,
+  },
+  {
+    row: 8,
+    column: 10,
+  },
+  {
+    row: 16,
+    column: 16,
+  },
+  {
+    row: 5,
+    column: 18,
+  },
+  {
+    row: 18,
+    column: 5,
+  },
+  {
+    row: 17,
+    column: 5,
+  },
+  {
+    row: 14,
+    column: 3,
+  },
+];
 
-export const PLAYER_VISIBILITY_RADIUS = 3;
-
-export function createInitialState(players: Player[]): GameState {
+export function createInitialState(players: Player[], config: GameConfig): GameState {
   const gameObjects: GameObject[] = [];
 
+  const gameConfig = {
+    rowCount: config.rowCount,
+    columnCount: config.columnCount,
+  };
+
   const initialState: GameState = {
+    config: gameConfig,
     playerScore: players.map(_ => {
       return { id: _.id, score: 0 };
     }),
     gameObjects: gameObjects,
-    fields: createArrayWithLength(BOARD_HEIGHT).map((_, rowIndex) =>
-      createArrayWithLength(BOARD_WIDTH).map((_, columnIndex) => {
-        if (rowIndex === 0 || columnIndex === 0 || rowIndex === (BOARD_HEIGHT - 1) || columnIndex === (BOARD_WIDTH - 1)) {
+    fields: createArrayWithLength(gameConfig.rowCount).map((_, rowIndex) =>
+      createArrayWithLength(gameConfig.columnCount).map((_, columnIndex) => {
+        if (rowIndex === 0 || columnIndex === 0 || rowIndex === (gameConfig.rowCount - 1) || columnIndex === (gameConfig.columnCount - 1)) {
           const wallObject: GameObject = {
             id: uuid(),
             type: GameObjectType.Wall,
@@ -53,8 +102,10 @@ export function createInitialState(players: Player[]): GameState {
     ),
   };
 
-  for (const player of players) {
-    const position = _getRandomFreePosition(initialState.fields);
+  for (let i = 0; i < players.length; i++){
+    const player = players[i]!;
+
+    const position = PLAYER_POSITIONS[i]!;//_getRandomFreePosition(initialState.fields);
 
     const playerGameObject: PlayerGameObject = {
       id: player.id,
@@ -69,8 +120,8 @@ export function createInitialState(players: Player[]): GameState {
     (initialState.fields[position.row]!)[position.column] = playerGameObject;
   }
 
-  for (let i = 0; i < NUMBER_OF_FOODS; i++) {
-    const position = _getRandomFreePosition(initialState.fields);
+  for (let i = 0; i < config.initialFoodCount; i++) {
+    const position = FOOD_POSITIONS[i]!;//_getRandomFreePosition(initialState.fields);
 
     const foodGameObject: FoodGameObject = {
       id: uuid(),
@@ -92,8 +143,8 @@ export function createInitialState(players: Player[]): GameState {
 
     do {
       result = {
-        row: random(0, BOARD_HEIGHT - 1),
-        column: random(0, BOARD_WIDTH - 1),
+        row: random(0, gameConfig.rowCount - 1),
+        column: random(0, gameConfig.columnCount - 1),
       };
     } while (fields[result.row]?.[result.column]);
 
@@ -101,10 +152,10 @@ export function createInitialState(players: Player[]): GameState {
   }
 }
 
-export function applyGameChangeToState(gameState: Readonly<GameState>, player: Player, playerMove: PlayerMove): Readonly<GameState> {
-  const resultState = deepClone(gameState);
+export function applyGameChangeToState(gameStateBASE: Readonly<GameState>, playerMove: PlayerMove): Readonly<GameState> {
+  const resultState = deepClone(gameStateBASE);
 
-  const playerState: PlayerGameObject = resultState.gameObjects.find(_ => _.type === GameObjectType.Player && _.id === player.id) as PlayerGameObject;
+  const playerState: PlayerGameObject = resultState.gameObjects.find(_ => _.type === GameObjectType.Player && _.id === playerMove.candidateId) as PlayerGameObject;
 
   switch (playerMove.type) {
     case PlayerMoveType.TurnLeft:
@@ -191,13 +242,13 @@ export function applyGameChangeToState(gameState: Readonly<GameState>, player: P
           throw new Error(`Unknown direction: ${ playerState.direction }`);
       }
 
-      const isInvalidDestination = destinationPosition.row < 0 || destinationPosition.row > (BOARD_HEIGHT - 1) || destinationPosition.column < 0 || destinationPosition.column > (BOARD_WIDTH - 1);
+      const isInvalidDestination = destinationPosition.row < 0 || destinationPosition.row > (resultState.config.rowCount - 1) || destinationPosition.column < 0 || destinationPosition.column > (resultState.config.columnCount - 1);
 
       if (isInvalidDestination) {
         break;
       }
 
-      const gameObjectInDestination = gameState.fields[destinationPosition.row]![destinationPosition.column];
+      const gameObjectInDestination = resultState.fields[destinationPosition.row]![destinationPosition.column];
 
       switch (gameObjectInDestination?.type) {
         case GameObjectType.Wall:
@@ -207,16 +258,16 @@ export function applyGameChangeToState(gameState: Readonly<GameState>, player: P
 
         case GameObjectType.Food:
         case undefined:
-          gameState.fields[playerState.position.row]![playerState.position.column] = undefined;
+          resultState.fields[playerState.position.row]![playerState.position.column] = undefined;
 
           playerState.position = destinationPosition;
 
-          gameState.fields[playerState.position.row]![playerState.position.column] = playerState;
+          resultState.fields[playerState.position.row]![playerState.position.column] = playerState;
 
           if (gameObjectInDestination && gameObjectInDestination.type === GameObjectType.Food) {
             playerState.energy += (gameObjectInDestination as FoodGameObject).energyBoost;
 
-            gameState.gameObjects.splice(gameState.gameObjects.findIndex(_ => _.id === gameObjectInDestination.id), 1);
+            resultState.gameObjects.splice(resultState.gameObjects.findIndex(_ => _.id === gameObjectInDestination.id), 1);
           }
 
           break;
@@ -233,14 +284,16 @@ export function applyGameChangeToState(gameState: Readonly<GameState>, player: P
 
   playerState.energy--;
 
+  resultState.playerScore.find(_ => _.id === playerMove.candidateId)!.score++;
+
   return resultState;
 }
 
-export function calculatePlayerVisible(gameState: Readonly<GameState>, player: Player): PlayerVisible {
+export function calculatePlayerVisible(gameState: Readonly<GameState>, player: Player, playerVisibilityRadius: number): PlayerVisible {
   const playerState: PlayerGameObject = gameState.gameObjects.find(_ => _.type === GameObjectType.Player && _.id === player.id) as PlayerGameObject;
 
   return {
-    visibleFieldObjects: gameState.gameObjects.filter(_ => _.id !== player.id && Math.abs(_.position.row - playerState.position.row) < PLAYER_VISIBILITY_RADIUS && Math.abs(_.position.column - playerState.position.column) < PLAYER_VISIBILITY_RADIUS),
+    visibleFieldObjects: gameState.gameObjects.filter(_ => _.id !== player.id && Math.abs(_.position.row - playerState.position.row) < playerVisibilityRadius && Math.abs(_.position.column - playerState.position.column) < playerVisibilityRadius),
     playerState: playerState,
   };
 }

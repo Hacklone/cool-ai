@@ -1,4 +1,9 @@
-import { IPopulation, IPopulationFactory, PopulationId } from '../interfaces/population.interface';
+import {
+  IPopulation,
+  IPopulationFactory,
+  ISerializedPopulation,
+  PopulationId,
+} from '../interfaces/population.interface';
 import { IPopulationIterationResult } from '../interfaces/population-iteration.interface';
 import { ICandidate, ICandidateFactory } from '../interfaces/candidate.interface';
 import { createArrayWithLength } from '../utils/array.utils';
@@ -28,6 +33,7 @@ export class NaturalSelectionPopulationFactory implements IPopulationFactory {
   public async createInitialPopulationAsync(): Promise<IPopulation> {
     return {
       id: <PopulationId>uuid(),
+      index: 0,
       candidates: await this.createRandomCandidatesAsync(this._populationCount),
     };
   }
@@ -45,6 +51,7 @@ export class NaturalSelectionPopulationFactory implements IPopulationFactory {
 
     const newPopulation: IPopulation = {
       id: <PopulationId>uuid(),
+      index: previousPopulation.index + 1,
       candidates: [
         ...clonedCandidates,
         ...crossedCandidates,
@@ -57,6 +64,10 @@ export class NaturalSelectionPopulationFactory implements IPopulationFactory {
       newPopulation.candidates.push(...(await this.createRandomCandidatesAsync(this._populationCount - newPopulation.candidates.length)));
     }
 
+    for (const candidate of previousPopulation.candidates) {
+      candidate.dispose();
+    }
+
     return newPopulation;
   }
 
@@ -64,5 +75,21 @@ export class NaturalSelectionPopulationFactory implements IPopulationFactory {
     return await Promise.all(createArrayWithLength(count).map(() => {
       return this._candidateFactory.createRandomCandidateAsync();
     }));
+  }
+
+  public async serializePopulationAsync(population: IPopulation): Promise<ISerializedPopulation> {
+    return {
+      id: population.id,
+      index: population.index,
+      candidates: await Promise.all(population.candidates.map(_ => this._candidateFactory.serializeCandidateAsync(_))),
+    };
+  }
+
+  public async deserializePopulationAsync(serializedData: ISerializedPopulation): Promise<IPopulation> {
+    return {
+      id: serializedData.id,
+      index: serializedData.index,
+      candidates: await Promise.all(serializedData.candidates.map(_ => this._candidateFactory.deserializeAsync(_))),
+    };
   }
 }

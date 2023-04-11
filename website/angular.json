@@ -90,10 +90,12 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "ai-rpg-website:build:production"
+              "browserTarget": "ai-rpg-website:build:production",
+              "ssl": true
             },
             "development": {
-              "browserTarget": "ai-rpg-website:build:development"
+              "browserTarget": "ai-rpg-website:build:development",
+              "ssl": true
             }
           },
           "defaultConfiguration": "development"
