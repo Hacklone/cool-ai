@@ -5,7 +5,7 @@ import {
   PopulationId,
 } from '../interfaces/population.interface';
 import { IPopulationIterationResult } from '../interfaces/population-iteration.interface';
-import { ICandidate, ICandidateFactory } from '../interfaces/candidate.interface';
+import { candidateSourceToRank, ICandidate, ICandidateFactory } from '../interfaces/candidate.interface';
 import { createArrayWithLength } from '../utils/array.utils';
 import { v4 as uuid } from 'uuid';
 import { chunk } from 'lodash';
@@ -42,21 +42,21 @@ export class NaturalSelectionPopulationFactory implements IPopulationFactory {
     previousPopulation: IPopulation,
     iterationResult: IPopulationIterationResult,
   ): Promise<IPopulation> {
-    const rankedCandidates = iterationResult.candidateRanks.sort((a, b) => b.fitness - a.fitness).map(_ => previousPopulation.candidates.find(__ => _.candidateId === _.candidateId)!);
+    const rankedCandidates = sortCandidatesForNaturalSelectionAsync(previousPopulation, iterationResult);
 
     const clonedCandidates = await Promise.all(rankedCandidates.slice(0, this.configuration.cloneCount).map(_ => this._candidateFactory.createCloneCandidateAsync(_)));
     const crossedCandidates = await Promise.all(chunk(rankedCandidates, 2).filter(_ => _.length >= 2).map(([a, b]) => this._candidateFactory.createCrossOverCandidateAsync(a!, b!)));
     const mutatedCandidates = await Promise.all(rankedCandidates.slice(0, this.configuration.mutationCount).map(_ => this._candidateFactory.createMutatedCandidateAsync(_)));
-    const randomCandidates = await this.createRandomCandidatesAsync(this.configuration.randomCount);
+    //const randomCandidates = await this.createRandomCandidatesAsync(this.configuration.randomCount);
 
     const newPopulation: IPopulation = {
       id: <PopulationId>uuid(),
       index: previousPopulation.index + 1,
       candidates: [
-        ...clonedCandidates,
-        ...crossedCandidates,
         ...mutatedCandidates,
-        ...randomCandidates,
+        ...crossedCandidates,
+        ...clonedCandidates,
+        //...randomCandidates,
       ],
     };
 
@@ -92,4 +92,20 @@ export class NaturalSelectionPopulationFactory implements IPopulationFactory {
       candidates: await Promise.all(serializedData.candidates.map(_ => this._candidateFactory.deserializeAsync(_))),
     };
   }
+}
+
+export function sortCandidatesForNaturalSelectionAsync(
+  previousPopulation: IPopulation,
+  iterationResult: IPopulationIterationResult,
+): ICandidate[] {
+  return iterationResult.candidateRanks
+    .map(_ => {
+      return {
+        candidate: previousPopulation.candidates.find(candidate => candidate.id === _.candidateId)!,
+        fitness: _.fitness,
+      };
+    })
+    .sort((a, b) => candidateSourceToRank(b.candidate.source) - candidateSourceToRank(a.candidate.source))
+    .sort((a, b) => b.fitness - a.fitness)
+    .map(_ => _.candidate);
 }

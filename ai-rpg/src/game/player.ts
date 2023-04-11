@@ -1,10 +1,11 @@
-import { CandidateId, CandidateSource, ICandidate } from '@cool/genetics';
+import { CandidateId, CandidateSource, createArrayWithLength, ICandidate } from '@cool/genetics';
 import { v4 as uuid } from 'uuid';
 import {
   directionToNumber,
   GameConfig,
   GameFieldPosition,
   GameObjectType,
+  PlayerConfig,
   PlayerMove,
   PlayerMoveType,
   PlayerVisible,
@@ -12,23 +13,34 @@ import {
 } from '../interfaces/game.interface';
 import * as tf from '@tensorflow/tfjs';
 
+type PlayerInput = number[];
+
 export class Player implements ICandidate {
+  private readonly _memory!: PlayerInput[];
+
   constructor(
     public model: tf.LayersModel,
     public parentIds: CandidateId[],
     public source: CandidateSource | undefined,
     private _gameConfig: GameConfig,
+    private _playerConfig: PlayerConfig,
   ) {
+    this._memory = createArrayWithLength(this._playerConfig.memoryLength)
+      .map(() => <PlayerInput>(createArrayWithLength(this._playerConfig.inputNodeCount).map(() => -1)));
   }
 
   public id = <CandidateId>uuid();
+
+  public get visibilityRadius() {
+    return this._playerConfig.visibilityRadius;
+  }
 
   public dispose() {
     this.model.dispose();
   }
 
   public async getNextMoveAsync(playerVisible: PlayerVisible): Promise<PlayerMove> {
-    const inputArray = [
+    const input: PlayerInput = [
       playerVisible.playerState.energy,
       playerVisible.playerState.position.row,
       playerVisible.playerState.position.column,
@@ -36,11 +48,16 @@ export class Player implements ICandidate {
       ...this._generateVisibleFields(playerVisible),
     ];
 
-    const inputTensor = tf.tensor2d(inputArray, [1, inputArray.length]);
+    const inputTensor = tf.tensor2d([
+      ...this._memory.slice(-1 * this._playerConfig.memoryLength),
+      input,
+    ], [this._playerConfig.memoryLength + 1, this._playerConfig.inputNodeCount]);
 
     const prediction = <tf.Tensor<any>>this.model.predict(inputTensor);
 
     const predictionData = Array.from(await prediction.data());
+
+    this._memory.push(input);
 
     prediction.dispose();
     inputTensor.dispose();
@@ -79,8 +96,8 @@ export class Player implements ICandidate {
   private _generateVisibleFields(playerVisible: PlayerVisible): number[] {
     const result = [];
 
-    for (let row = (-1 * this._gameConfig.playerVisibilityRadius); row < (this._gameConfig.playerVisibilityRadius + 1); row++) {
-      for (let column = (-1 * this._gameConfig.playerVisibilityRadius); column < (this._gameConfig.playerVisibilityRadius + 1); column++) {
+    for (let row = (-1 * this._playerConfig.visibilityRadius); row < (this._playerConfig.visibilityRadius + 1); row++) {
+      for (let column = (-1 * this._playerConfig.visibilityRadius); column < (this._playerConfig.visibilityRadius + 1); column++) {
         const position: GameFieldPosition = {
           row: playerVisible.playerState.position.row + row,
           column: playerVisible.playerState.position.column + column,

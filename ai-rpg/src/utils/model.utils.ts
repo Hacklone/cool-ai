@@ -16,7 +16,7 @@ export abstract class ModelUtils {
     return await this.deserializeModelAsync(deepClone(serializedModel));
   }
 
-  public static async mutateModelAsync(model: LayersModel, mutationRate: number, mutationPower: number) {
+  public static async mutateModelAsync(model: LayersModel, mutationRate: number, maxMutationPower: number) {
     const newModel = await this.cloneModelAsync(model);
 
     const hiddenLayers = newModel.layers.slice(1, -1);
@@ -34,9 +34,9 @@ export abstract class ModelUtils {
         } else {
           const tensorToMultiplyWith = tf.tensor(
             (await originalWeightTensor.data()).map(() => {
-              const flipper = Math.random() > mutationRate ? -1 : 1;
+              const flipper = Math.random() > (1 - mutationRate) ? -1 : 1;
 
-              return Math.random() * mutationPower * flipper;
+              return  1 + (flipper * Math.random() * maxMutationPower);
             }),
             originalWeightTensor.shape,
           );

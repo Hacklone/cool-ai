@@ -9,6 +9,25 @@ export enum CandidateSource {
   Random = 'random',
 }
 
+export function candidateSourceToRank(source: CandidateSource | undefined): number {
+  switch (source) {
+    case CandidateSource.Mutation:
+      return 4;
+
+    case CandidateSource.CrossOver:
+      return 3;
+
+    case CandidateSource.Clone:
+      return 2;
+
+    case CandidateSource.Random:
+      return 1;
+
+    default:
+      return 0;
+  }
+}
+
 export interface ICandidate {
   id: CandidateId;
 

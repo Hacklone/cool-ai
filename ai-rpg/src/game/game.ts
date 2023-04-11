@@ -1,7 +1,8 @@
-import { CandidateId, deepClone, ICandidateTest, ICandidateTestFactory } from '@cool/genetics';
+import { CandidateId, deepClone, ICandidateTest } from '@cool/genetics';
 import {
   GameConfig,
   GameObjectType,
+  GameParameters,
   GameResult,
   GameState,
   PlayerGameObject,
@@ -17,11 +18,12 @@ export class Game implements ICandidateTest {
 
   constructor(
     private _config: GameConfig,
+    private _parameters: GameParameters,
   ) {
   }
 
   public async runAsync(...players: Player[]): Promise<GameResult> {
-    this._initialState = createInitialState(players, this._config);
+    this._initialState = createInitialState(players, this._config, this._parameters);
 
     this._currentState = deepClone(this._initialState);
 
@@ -33,7 +35,7 @@ export class Game implements ICandidateTest {
       alivePlayers = this._currentState.gameObjects.filter(_ => _.type === GameObjectType.Player && (_ as PlayerGameObject).energy > 0).map(_ => players.find(player => player.id === _.id)!);
 
       for (const player of alivePlayers) {
-        const nextMove = await player.getNextMoveAsync(calculatePlayerVisible(this._currentState!, player, this._config.playerVisibilityRadius));
+        const nextMove = await player.getNextMoveAsync(calculatePlayerVisible(this._currentState!, player, player.visibilityRadius));
 
         this._stateChangeTriggers.push(nextMove);
 
@@ -53,18 +55,6 @@ export class Game implements ICandidateTest {
       initialState: this._initialState,
       stateChangeTriggers: this._stateChangeTriggers,
     };
-  }
-}
-
-export class GameFactory implements ICandidateTestFactory {
-  constructor(
-    private _config: GameConfig,
-  ) {
-
-  }
-
-  public async createCandidateTestAsync(): Promise<ICandidateTest> {
-    return new Game(this._config);
   }
 }
 

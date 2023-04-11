@@ -5,7 +5,11 @@ import {
 } from '../interfaces/population-iteration.interface';
 import { IPopulation } from '../interfaces/population.interface';
 import { CandidateId, ICandidate } from '../interfaces/candidate.interface';
-import { ICandidateTestFactory, ICandidateTestResult } from '../interfaces/candidate-test.interface';
+import {
+  ICandidateTestConfig,
+  ICandidateTestFactory,
+  ICandidateTestResult,
+} from '../interfaces/candidate-test.interface';
 
 export class RoundTournamentIteration implements IPopulationIteration {
   constructor(
@@ -32,7 +36,9 @@ export class RoundTournamentIteration implements IPopulationIteration {
       }
     }
 
-    const testResults = await Promise.all(iterationPairs.map(pair => this.runTestOnPairAsync(pair.candidate1, pair.candidate2)));
+    const testConfig = await this._candidateTestFactory.createCandidateTestConfigAsync();
+
+    const testResults = await Promise.all(iterationPairs.map(pair => this.runTestOnPairAsync(testConfig, pair.candidate1, pair.candidate2)));
 
     const candidatePoints = new Map<CandidateId, {
       fitness: number;
@@ -58,8 +64,8 @@ export class RoundTournamentIteration implements IPopulationIteration {
     };
   }
 
-  private async runTestOnPairAsync(candidate1: ICandidate, candidate2: ICandidate): Promise<ICandidateTestResult> {
-    const iteration = await this._candidateTestFactory.createCandidateTestAsync();
+  private async runTestOnPairAsync(testConfig: ICandidateTestConfig, candidate1: ICandidate, candidate2: ICandidate): Promise<ICandidateTestResult> {
+    const iteration = await this._candidateTestFactory.createCandidateTestAsync(testConfig);
 
     return await iteration.runAsync(candidate1, candidate2);
   }

@@ -1,10 +1,20 @@
-import { ICandidateKnownCandidateTestState, ICandidateMove, ICandidateTestResult } from '@cool/genetics';
+import {
+  ICandidateKnownCandidateTestState,
+  ICandidateMove,
+  ICandidateTestConfig,
+  ICandidateTestResult,
+} from '@cool/genetics';
 
 export interface GameConfig {
   columnCount: number;
   rowCount: number;
   initialFoodCount: number;
-  playerVisibilityRadius: number;
+}
+
+export interface GameParameters extends ICandidateTestConfig {
+  playerPositions: GameFieldPosition[];
+
+  foodPositions: GameFieldPosition[];
 }
 
 export interface GameState {
@@ -14,10 +24,7 @@ export interface GameState {
 
   playerScore: { id: string; score: number; }[];
 
-  config: {
-    rowCount: number;
-    columnCount: number;
-  };
+  config: GameConfig;
 }
 
 export interface GameStateChange {
@@ -88,6 +95,18 @@ export function directionToNumber(direction: GameFieldDirection): number {
 export interface GameFieldPosition {
   row: number;
   column: number;
+}
+
+export class PlayerConfig {
+  constructor(
+    public visibilityRadius: number,
+    public memoryLength: number,
+  ) {
+  }
+
+  public get inputNodeCount(): number {
+    return 4 + Math.pow((2 * this.visibilityRadius) + 1, 2);
+  }
 }
 
 export interface PlayerVisible extends ICandidateKnownCandidateTestState {

@@ -1,9 +1,11 @@
 import {
-  FoodGameObject, GameConfig,
+  FoodGameObject,
+  GameConfig,
   GameFieldDirection,
   GameFieldPosition,
   GameObject,
   GameObjectType,
+  GameParameters,
   GameState,
   PlayerGameObject,
   PlayerMove,
@@ -15,97 +17,22 @@ import { v4 as uuid } from 'uuid';
 import { random } from 'lodash';
 import { createArrayWithLength, deepClone } from '@cool/genetics';
 
-const PLAYER_POSITIONS: GameFieldPosition[] = [
-  {
-    row: 8,
-    column: 8,
-  }
-];
-
-const FOOD_POSITIONS: GameFieldPosition[] = [
-  {
-    row: 10,
-    column: 12,
-  },
-  {
-    row: 15,
-    column: 12,
-  },
-  {
-    row: 12,
-    column: 8,
-  },
-  {
-    row: 2,
-    column: 10,
-  },
-  {
-    row: 8,
-    column: 10,
-  },
-  {
-    row: 16,
-    column: 16,
-  },
-  {
-    row: 5,
-    column: 18,
-  },
-  {
-    row: 18,
-    column: 5,
-  },
-  {
-    row: 17,
-    column: 5,
-  },
-  {
-    row: 14,
-    column: 3,
-  },
-];
-
-export function createInitialState(players: Player[], config: GameConfig): GameState {
+export function createInitialState(players: Player[], config: GameConfig, parameters: GameParameters): GameState {
   const gameObjects: GameObject[] = [];
 
-  const gameConfig = {
-    rowCount: config.rowCount,
-    columnCount: config.columnCount,
-  };
-
   const initialState: GameState = {
-    config: gameConfig,
+    config: config,
     playerScore: players.map(_ => {
       return { id: _.id, score: 0 };
     }),
     gameObjects: gameObjects,
-    fields: createArrayWithLength(gameConfig.rowCount).map((_, rowIndex) =>
-      createArrayWithLength(gameConfig.columnCount).map((_, columnIndex) => {
-        if (rowIndex === 0 || columnIndex === 0 || rowIndex === (gameConfig.rowCount - 1) || columnIndex === (gameConfig.columnCount - 1)) {
-          const wallObject: GameObject = {
-            id: uuid(),
-            type: GameObjectType.Wall,
-            position: {
-              row: rowIndex,
-              column: columnIndex,
-            },
-            direction: GameFieldDirection.Down,
-          };
-
-          gameObjects.push(wallObject);
-
-          return wallObject;
-        }
-
-        return undefined;
-      }),
-    ),
+    fields: createFieldsWithWalls(config, gameObjects),
   };
 
-  for (let i = 0; i < players.length; i++){
+  for (let i = 0; i < players.length; i++) {
     const player = players[i]!;
 
-    const position = PLAYER_POSITIONS[i]!;//_getRandomFreePosition(initialState.fields);
+    const position = parameters.playerPositions[i]!;
 
     const playerGameObject: PlayerGameObject = {
       id: player.id,
@@ -121,7 +48,7 @@ export function createInitialState(players: Player[], config: GameConfig): GameS
   }
 
   for (let i = 0; i < config.initialFoodCount; i++) {
-    const position = FOOD_POSITIONS[i]!;//_getRandomFreePosition(initialState.fields);
+    const position = parameters.foodPositions[i]!;
 
     const foodGameObject: FoodGameObject = {
       id: uuid(),
@@ -137,19 +64,6 @@ export function createInitialState(players: Player[], config: GameConfig): GameS
   }
 
   return initialState;
-
-  function _getRandomFreePosition(fields: ((GameObject | undefined)[])[]): GameFieldPosition {
-    let result: GameFieldPosition;
-
-    do {
-      result = {
-        row: random(0, gameConfig.rowCount - 1),
-        column: random(0, gameConfig.columnCount - 1),
-      };
-    } while (fields[result.row]?.[result.column]);
-
-    return result;
-  }
 }
 
 export function applyGameChangeToState(gameStateBASE: Readonly<GameState>, playerMove: PlayerMove): Readonly<GameState> {
@@ -296,4 +210,41 @@ export function calculatePlayerVisible(gameState: Readonly<GameState>, player: P
     visibleFieldObjects: gameState.gameObjects.filter(_ => _.id !== player.id && Math.abs(_.position.row - playerState.position.row) < playerVisibilityRadius && Math.abs(_.position.column - playerState.position.column) < playerVisibilityRadius),
     playerState: playerState,
   };
+}
+
+export function createFieldsWithWalls(config: GameConfig, gameObjects: GameObject[]): (GameObject | undefined)[][] {
+  return createArrayWithLength(config.rowCount).map((_, rowIndex) =>
+    createArrayWithLength(config.columnCount).map((_, columnIndex) => {
+      if (rowIndex === 0 || columnIndex === 0 || rowIndex === (config.rowCount - 1) || columnIndex === (config.columnCount - 1)) {
+        const wallObject: GameObject = {
+          id: uuid(),
+          type: GameObjectType.Wall,
+          position: {
+            row: rowIndex,
+            column: columnIndex,
+          },
+          direction: GameFieldDirection.Down,
+        };
+
+        gameObjects.push(wallObject);
+
+        return wallObject;
+      }
+
+      return undefined;
+    }),
+  );
+}
+
+export function getRandomFreePositionOnFields(config: GameConfig, fields: ((GameObject | undefined)[])[]): GameFieldPosition {
+  let result: GameFieldPosition;
+
+  do {
+    result = {
+      row: random(0, config.rowCount - 1),
+      column: random(0, config.columnCount - 1),
+    };
+  } while (fields[result.row]?.[result.column]);
+
+  return result;
 }

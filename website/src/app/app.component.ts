@@ -6,8 +6,9 @@ import {
   IPopulation,
   NaturalSelectionPopulationFactory,
   SimpleIterationFactory,
+  sortCandidatesForNaturalSelectionAsync,
 } from '@cool/genetics';
-import { GameConfig, GameFactory, GameResult, PlayerFactory } from '@cool/ai-rpg';
+import { GameConfig, GameFactory, GameResult, PlayerConfig, PlayerFactory } from '@cool/ai-rpg';
 
 @Component({
   selector: 'app-root',
@@ -20,15 +21,24 @@ export class AppComponent implements OnInit {
     columnCount: 20,
     rowCount: 20,
     initialFoodCount: 10,
-    playerVisibilityRadius: 5,
   };
 
   private _populationFactory = new NaturalSelectionPopulationFactory(
-    new PlayerFactory(this._gameConfig),
+    new PlayerFactory(
+      this._gameConfig,
+      new PlayerConfig(
+        5,
+        5,
+      ),
+      {
+        mutationRate: 0.05,
+        maxMutationPower: 0.1,
+      },
+    ),
     {
       cloneCount: 2,
       crossoverCount: 2,
-      mutationCount: 2,
+      mutationCount: 6,
       randomCount: 2,
     },
   );
@@ -74,7 +84,10 @@ export class AppComponent implements OnInit {
   public async runNextPopulationAsync() {
     this.currentPopulation = await this._geneticsRunner.runNextPopulationAsync();
 
-    this.currentPopulation.population.candidates.sort((a, b) => this.getFitnessOfCandidate(b.id) - this.getFitnessOfCandidate(a.id));
+    this.currentPopulation.population.candidates = sortCandidatesForNaturalSelectionAsync(
+      this.currentPopulation.population,
+      this.currentPopulation.populationIterationResult,
+    );
 
     this._changeDetector.markForCheck();
   }
@@ -100,8 +113,12 @@ export class AppComponent implements OnInit {
       return;
     }
 
+    const serializedPopulation = await this._populationFactory.serializePopulationAsync(this.currentPopulation.population);
+
+    serializedPopulation.candidates = serializedPopulation.candidates.slice(0, 10);
+
     localStorage.setItem(POPULATION_STORAGE_KEY, JSON.stringify(
-      await this._populationFactory.serializePopulationAsync(this.currentPopulation.population),
+      serializedPopulation,
     ));
 
     confirm('Successful save');
