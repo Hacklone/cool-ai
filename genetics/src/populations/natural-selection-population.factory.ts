@@ -47,7 +47,7 @@ export class NaturalSelectionPopulationFactory implements IPopulationFactory {
     const clonedCandidates = await Promise.all(rankedCandidates.slice(0, this.configuration.cloneCount).map(_ => this._candidateFactory.createCloneCandidateAsync(_)));
     const crossedCandidates = await Promise.all(chunk(rankedCandidates, 2).filter(_ => _.length >= 2).map(([a, b]) => this._candidateFactory.createCrossOverCandidateAsync(a!, b!)));
     const mutatedCandidates = await Promise.all(rankedCandidates.slice(0, this.configuration.mutationCount).map(_ => this._candidateFactory.createMutatedCandidateAsync(_)));
-    //const randomCandidates = await this.createRandomCandidatesAsync(this.configuration.randomCount);
+    const randomCandidates = await this.createRandomCandidatesAsync(this.configuration.randomCount);
 
     const newPopulation: IPopulation = {
       id: <PopulationId>uuid(),
@@ -56,7 +56,7 @@ export class NaturalSelectionPopulationFactory implements IPopulationFactory {
         ...mutatedCandidates,
         ...crossedCandidates,
         ...clonedCandidates,
-        //...randomCandidates,
+        ...randomCandidates,
       ],
     };
 

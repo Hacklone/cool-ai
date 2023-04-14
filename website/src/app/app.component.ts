@@ -43,9 +43,13 @@ export class AppComponent implements OnInit {
     },
   );
 
+  private _gameFactory = new GameFactory(
+    this._gameConfig,
+  );
+
   private _geneticsRunner = new GeneticsRunner(
     this._populationFactory,
-    new SimpleIterationFactory(new GameFactory(this._gameConfig)),
+    new SimpleIterationFactory(this._gameFactory),
   );
 
   constructor(
@@ -79,6 +83,10 @@ export class AppComponent implements OnInit {
     this.runningStopped = true;
 
     this._changeDetector.markForCheck();
+  }
+
+  public async changeGameMapAsync() {
+    await this._gameFactory.changeGameMapAsync();
   }
 
   public async runNextPopulationAsync() {

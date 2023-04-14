@@ -1,4 +1,5 @@
 import { CandidateId, ICandidate } from './candidate.interface';
+import { PopulationId } from './population.interface';
 
 export interface ICandidateTest {
   runAsync(...candidates: ICandidate[]): Promise<ICandidateTestResult>;
@@ -13,7 +14,7 @@ export interface ICandidateTestResult {
 }
 
 export interface ICandidateTestFactory {
-  createCandidateTestConfigAsync(): Promise<ICandidateTestConfig>;
+  createCandidateTestConfigAsync(populationId: PopulationId): Promise<ICandidateTestConfig>;
 
   createCandidateTestAsync(testConfig: ICandidateTestConfig): Promise<ICandidateTest>;
 }

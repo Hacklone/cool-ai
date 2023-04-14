@@ -13,7 +13,7 @@ export class SimpleIteration implements IPopulationIteration {
   }
 
   public async runAsync(population: IPopulation): Promise<IPopulationIterationResult> {
-    const testConfig = await this._candidateTestFactory.createCandidateTestConfigAsync();
+    const testConfig = await this._candidateTestFactory.createCandidateTestConfigAsync(population.id);
 
     const testResults = await Promise.all(population.candidates.map(async _ => {
       const test = await this._candidateTestFactory.createCandidateTestAsync(testConfig);

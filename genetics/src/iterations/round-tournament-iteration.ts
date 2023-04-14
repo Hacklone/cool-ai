@@ -36,7 +36,7 @@ export class RoundTournamentIteration implements IPopulationIteration {
       }
     }
 
-    const testConfig = await this._candidateTestFactory.createCandidateTestConfigAsync();
+    const testConfig = await this._candidateTestFactory.createCandidateTestConfigAsync(population.id);
 
     const testResults = await Promise.all(iterationPairs.map(pair => this.runTestOnPairAsync(testConfig, pair.candidate1, pair.candidate2)));
 
